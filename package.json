@@ -1,0 +1,24 @@
+{
+  "name": "@bufferapp/session-service",
+  "version": "0.0.1",
+  "description": "Buffer session service",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bufferapp/session-service.git"
+  },
+  "keywords": [
+    "buffer",
+    "session",
+    "service"
+  ],
+  "author": "hharnisc@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/bufferapp/session-service/issues"
+  },
+  "homepage": "https://github.com/bufferapp/session-service#readme"
+}
