@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package sessions;
+
+service Sessions {
+  rpc Create (CreateSessionRequest) returns (CreateSessionResponse) {}
+}
+
+message CreateSessionRequest {
+  string accessToken = 1;
+};
+
+message CreateSessionResponse {
+  string jwt = 1;
+};
