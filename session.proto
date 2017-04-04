@@ -3,13 +3,14 @@ syntax = "proto3";
 package sessions;
 
 service Sessions {
-  rpc Create (CreateSessionRequest) returns (CreateSessionResponse) {}
+  rpc Create (AccessToken) returns (JWT) {}
+  rpc Get (JWT) returns (JWT) {}
 }
 
-message CreateSessionRequest {
-  string accessToken = 1;
+message JWT = {
+  string jwt = 1;
 };
 
-message CreateSessionResponse {
-  string jwt = 1;
+message AccessToken {
+  string accessToken = 1;
 };

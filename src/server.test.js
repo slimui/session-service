@@ -2,7 +2,10 @@ import Redis from 'ioredis';
 import jwt from 'jsonwebtoken';
 import { v4, uniqueId } from 'uuid';
 import grpc from 'grpc';
-import { create } from './server';
+import {
+  create,
+  get,
+} from './server';
 
 describe('server', () => {
   const secret = 's3cr3t';
@@ -101,6 +104,23 @@ describe('server', () => {
         .then(() => {
           expect(cb)
             .toBeCalledWith('Missing accessToken in session data');
+        });
+    });
+  });
+
+  describe('get', () => {
+    it('should call callback on success', () => {
+      const fakeJWT = 'fake JWT';
+      const cb = jest.fn();
+      const call = {
+        request: {
+          jwt: fakeJWT,
+        },
+      };
+      return get(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalled();
         });
     });
   });

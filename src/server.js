@@ -30,6 +30,10 @@ export const create = (call, cb) => { // eslint-disable-line import/prefer-defau
     .catch(err => cb(err));
 };
 
+export const get = (call, cb) =>
+  Promise.resolve()
+    .then(() => cb());
+
 const server = new grpc.Server();
 server.addProtoService(proto.sessions.Sessions.service, { create });
 server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
