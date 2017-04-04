@@ -225,7 +225,7 @@ describe('server', () => {
   });
 
   describe('destroy', () => {
-    it('description', () => {
+    it('should call callback on destroy', () => {
       const sessionId = 'sessionId';
       const cb = jest.fn();
       const call = {
@@ -237,6 +237,20 @@ describe('server', () => {
         .then(() => {
           expect(cb)
             .toBeCalled();
+        });
+    });
+
+    it('description', () => {
+      const sessionId = 'sessionId';
+      const call = {
+        request: {
+          sessionId,
+        },
+      };
+      return destroy(call, () => {})
+        .then(() => {
+          expect(Redis.prototype.del)
+            .toBeCalledWith(sessionId);
         });
     });
   });

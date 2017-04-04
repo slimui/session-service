@@ -12,4 +12,5 @@ Redis.prototype.get = jest.fn((key) => {
   }
   return Promise.resolve(Redis.fakeAccessToken);
 });
+Redis.prototype.del = jest.fn(() => Promise.resolve());
 export default Redis;

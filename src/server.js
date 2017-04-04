@@ -53,10 +53,9 @@ export const get = (call, cb) =>
     .then(token => cb(undefined, { token }))
     .catch(err => cb(err));
 
-export const destroy = (call, cb) => new Promise((resolve, reject) => {
-  cb();
-  resolve();
-});
+export const destroy = (call, cb) =>
+  redis.del(call.request.sessionId)
+    .then(() => cb());
 
 const server = new grpc.Server();
 server.addProtoService(proto.sessions.Sessions.service, { create });
