@@ -1,9 +1,9 @@
 const grpc = jest.genMockFromModule('grpc');
-// proto.sessions.Sessions.service
+grpc.stubService = 'stub service';
 grpc.load = jest.fn(() => ({
   sessions: {
     Sessions: {
-      service: true,
+      service: grpc.stubService,
     },
   },
 }));

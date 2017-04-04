@@ -13,6 +13,10 @@ describe('server', () => {
     expect(grpc.Server.prototype.start)
       .toBeCalled();
   });
+  it('should hook up all rpcs to service', () => {
+    expect(grpc.Server.prototype.addProtoService)
+      .toBeCalledWith(grpc.stubService, { create });
+  });
   describe('create', () => {
     it('should call callback on success', () => {
       const accessToken = 'accessToken';
