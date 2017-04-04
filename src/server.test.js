@@ -174,7 +174,7 @@ describe('server', () => {
         });
     });
 
-    it('should handle jwt verify', () => {
+    it('should handle jwt verify failures', () => {
       const fakeJWT = 'fakeJWT';
       const call = {
         request: {
@@ -187,6 +187,22 @@ describe('server', () => {
         .then(() => {
           expect(cb)
             .toBeCalledWith('failed to verify');
+        });
+    });
+
+    it('should handle jwt sign failures', () => {
+      const fakeJWT = 'fakeJWT';
+      const call = {
+        request: {
+          jwt: fakeJWT,
+        },
+      };
+      process.env.SIGNING_SECRET = 'anotherfail';
+      const cb = jest.fn();
+      return get(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalledWith('failed to sign');
         });
     });
   });

@@ -2,7 +2,7 @@ const jwt = jest.genMockFromModule('jsonwebtoken');
 jwt.fakeToken = 'fakeToken';
 jwt.fakeSessionId = 'fakeSessionId';
 jwt.sign = jest.fn((payload, secretOrPrivateKey, options, cb) => {
-  if (secretOrPrivateKey === 'fail') {
+  if (secretOrPrivateKey === 'fail' || secretOrPrivateKey === 'anotherfail') {
     cb('failed to sign');
   } else {
     cb(undefined, jwt.fakeToken);
