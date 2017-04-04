@@ -78,5 +78,18 @@ describe('server', () => {
             .toBeCalledWith('failed to sign');
         });
     });
+
+    it('should handle a Redis set failure', () => {
+      const accessToken = 'fail';
+      const call = {
+        request: { accessToken },
+      };
+      const cb = jest.fn();
+      return create(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalledWith('failed to set session');
+        });
+    });
   });
 });
