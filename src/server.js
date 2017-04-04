@@ -59,6 +59,10 @@ export const destroy = (call, cb) =>
     .catch(err => cb(err));
 
 const server = new grpc.Server();
-server.addProtoService(proto.sessions.Sessions.service, { create });
+server.addProtoService(proto.sessions.Sessions.service, {
+  create,
+  get,
+  destroy,
+});
 server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
 server.start();

@@ -5,6 +5,7 @@ package sessions;
 service Sessions {
   rpc Create (AccessToken) returns (JWT) {}
   rpc Get (JWT) returns (JWT) {}
+  rpc Destroy (SessionId) returns {}
 }
 
 message JWT = {
@@ -13,4 +14,8 @@ message JWT = {
 
 message AccessToken {
   string accessToken = 1;
+};
+
+message SessionId {
+  string sessionId = 1;
 };

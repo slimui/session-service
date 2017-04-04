@@ -20,7 +20,7 @@ describe('server', () => {
 
   it('should hook up all rpcs to service', () => {
     expect(grpc.Server.prototype.addProtoService)
-      .toBeCalledWith(grpc.stubService, { create });
+      .toBeCalledWith(grpc.stubService, { create, get, destroy });
   });
 
   it('should bind grpc server', () => {
