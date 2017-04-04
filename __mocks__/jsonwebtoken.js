@@ -9,8 +9,12 @@ jwt.sign = jest.fn((payload, secretOrPrivateKey, options, cb) => {
   }
 });
 jwt.verify = jest.fn((token, secretOrPublicKey, options, cb) => {
-  cb(undefined, {
-    sessionId: jwt.fakeSessionId,
-  });
+  if (secretOrPublicKey === 'fail') {
+    cb('failed to verify');
+  } else {
+    cb(undefined, {
+      sessionId: jwt.fakeSessionId,
+    });
+  }
 });
 export default jwt;

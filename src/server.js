@@ -50,7 +50,8 @@ export const get = (call, cb) =>
         }
       });
     }))
-    .then(token => cb(undefined, { token }));
+    .then(token => cb(undefined, { token }))
+    .catch(err => cb(err));
 
 const server = new grpc.Server();
 server.addProtoService(proto.sessions.Sessions.service, { create });

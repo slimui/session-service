@@ -173,5 +173,21 @@ describe('server', () => {
             .toBeCalledWith(undefined, { token: jwt.fakeToken });
         });
     });
+
+    it('should handle jwt verify', () => {
+      const fakeJWT = 'fakeJWT';
+      const call = {
+        request: {
+          jwt: fakeJWT,
+        },
+      };
+      process.env.SIGNING_SECRET = 'fail';
+      const cb = jest.fn();
+      return get(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalledWith('failed to verify');
+        });
+    });
   });
 });
