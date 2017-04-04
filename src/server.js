@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 const proto = grpc.load('./session.proto');
 const redis = new Redis(process.env.SESSION_STORE_LOCATION);
 
-export const create = (call, cb) => { // eslint-disable-line import/prefer-default-export
+export const create = (call, cb) => {
   const sessionId = v4();
   return new Promise((resolve, reject) => {
     const accessToken = call.request.accessToken;
@@ -41,7 +41,16 @@ export const get = (call, cb) =>
     });
   })
     .then(({ sessionId }) => redis.get(sessionId))
-    .then(() => cb());
+    .then(accessToken => new Promise((resolve, reject) => {
+      jwt.sign({ accessToken }, process.env.SIGNING_SECRET, {}, (err, token) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(token);
+        }
+      });
+    }))
+    .then(token => cb(undefined, { token }));
 
 const server = new grpc.Server();
 server.addProtoService(proto.sessions.Sessions.service, { create });

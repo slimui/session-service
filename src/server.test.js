@@ -151,5 +151,27 @@ describe('server', () => {
             .toBeCalledWith(jwt.fakeSessionId);
         });
     });
+
+    it('should return an access jwt', () => {
+      const fakeJWT = 'fakeJWT';
+      const call = {
+        request: {
+          jwt: fakeJWT,
+        },
+      };
+      const cb = jest.fn();
+      return get(call, cb)
+        .then(() => {
+          expect(jwt.sign)
+            .toBeCalledWith(
+              { accessToken: Redis.fakeAccessToken },
+              secret,
+              {},
+              jasmine.any(Function),
+            );
+          expect(cb)
+            .toBeCalledWith(undefined, { token: jwt.fakeToken });
+        });
+    });
   });
 });
