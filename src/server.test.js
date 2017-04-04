@@ -1,12 +1,17 @@
 import Redis from 'ioredis';
 import jwt from 'jsonwebtoken';
 import { v4, uniqueId } from 'uuid';
+import grpc from 'grpc';
 import { create } from './server';
 
 describe('server', () => {
   const secret = 's3cr3t';
   beforeEach(() => {
     process.env.SIGNING_SECRET = secret;
+  });
+  it('should start grpc server', () => {
+    expect(grpc.Server.prototype.start)
+      .toBeCalled();
   });
   describe('create', () => {
     it('should call callback on success', () => {
