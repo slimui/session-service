@@ -240,7 +240,7 @@ describe('server', () => {
         });
     });
 
-    it('description', () => {
+    it('should delete session from redis by key', () => {
       const sessionId = 'sessionId';
       const call = {
         request: {
