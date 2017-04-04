@@ -53,6 +53,11 @@ export const get = (call, cb) =>
     .then(token => cb(undefined, { token }))
     .catch(err => cb(err));
 
+export const destroy = (call, cb) => new Promise((resolve, reject) => {
+  cb();
+  resolve();
+});
+
 const server = new grpc.Server();
 server.addProtoService(proto.sessions.Sessions.service, { create });
 server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());

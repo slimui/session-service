@@ -5,6 +5,7 @@ import grpc from 'grpc';
 import {
   create,
   get,
+  destroy,
 } from './server';
 
 describe('server', () => {
@@ -219,6 +220,23 @@ describe('server', () => {
         .then(() => {
           expect(cb)
             .toBeCalledWith('failed to get session');
+        });
+    });
+  });
+
+  describe('destroy', () => {
+    it('description', () => {
+      const sessionId = 'sessionId';
+      const cb = jest.fn();
+      const call = {
+        request: {
+          sessionId,
+        },
+      };
+      return destroy(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalled();
         });
     });
   });
