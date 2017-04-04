@@ -91,5 +91,17 @@ describe('server', () => {
             .toBeCalledWith('failed to set session');
         });
     });
+
+    it('should handle missing accessToken', () => {
+      const call = {
+        request: { },
+      };
+      const cb = jest.fn();
+      return create(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalledWith('Missing accessToken in session data');
+        });
+    });
   });
 });
