@@ -31,7 +31,16 @@ export const create = (call, cb) => { // eslint-disable-line import/prefer-defau
 };
 
 export const get = (call, cb) =>
-  Promise.resolve()
+  new Promise((resolve, reject) => {
+    jwt.verify(call.request.jwt, process.env.SIGNING_SECRET, {}, (err, payload) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(payload);
+      }
+    });
+  })
+    .then(({ sessionId }) => redis.get(sessionId))
     .then(() => cb());
 
 const server = new grpc.Server();

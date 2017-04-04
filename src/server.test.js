@@ -123,5 +123,33 @@ describe('server', () => {
             .toBeCalled();
         });
     });
+
+    it('should verify token', () => {
+      const fakeJWT = 'fakeJWT';
+      const call = {
+        request: {
+          jwt: fakeJWT,
+        },
+      };
+      return get(call, () => {})
+        .then(() => {
+          expect(jwt.verify)
+            .toBeCalledWith(fakeJWT, secret, {}, jasmine.any(Function));
+        });
+    });
+
+    it('should get item from redis', () => {
+      const fakeJWT = 'fakeJWT';
+      const call = {
+        request: {
+          jwt: fakeJWT,
+        },
+      };
+      return get(call, () => {})
+        .then(() => {
+          expect(Redis.prototype.get)
+            .toBeCalledWith(jwt.fakeSessionId);
+        });
+    });
   });
 });
