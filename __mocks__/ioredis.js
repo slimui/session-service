@@ -6,5 +6,10 @@ Redis.prototype.set = jest.fn((key, value) => {
   }
   return Promise.resolve();
 });
-Redis.prototype.get = jest.fn(() => Promise.resolve(Redis.fakeAccessToken));
+Redis.prototype.get = jest.fn((key) => {
+  if (key === 'fail') {
+    return Promise.reject('failed to get session');
+  }
+  return Promise.resolve(Redis.fakeAccessToken);
+});
 export default Redis;

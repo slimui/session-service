@@ -11,6 +11,10 @@ jwt.sign = jest.fn((payload, secretOrPrivateKey, options, cb) => {
 jwt.verify = jest.fn((token, secretOrPublicKey, options, cb) => {
   if (secretOrPublicKey === 'fail') {
     cb('failed to verify');
+  } else if (secretOrPublicKey === 'redisfail') {
+    cb(undefined, {
+      sessionId: 'fail',
+    });
   } else {
     cb(undefined, {
       sessionId: jwt.fakeSessionId,

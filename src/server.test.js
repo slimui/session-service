@@ -205,5 +205,21 @@ describe('server', () => {
             .toBeCalledWith('failed to sign');
         });
     });
+
+    it('should handle redis get failures', () => {
+      const fakeJWT = 'fakeJWT';
+      const call = {
+        request: {
+          jwt: fakeJWT,
+        },
+      };
+      process.env.SIGNING_SECRET = 'redisfail';
+      const cb = jest.fn();
+      return get(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalledWith('failed to get session');
+        });
+    });
   });
 });
