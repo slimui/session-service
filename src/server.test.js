@@ -3,12 +3,6 @@ import Redis from 'ioredis';
 import { create } from './server';
 
 describe('server', () => {
-  it('should init ioredis with expected settings', () => {
-    process.env.SESSION_STORE_LOCATION = 'https://my-setting-store';
-    expect(Redis)
-      .toBeCalledWith(process.env.SESSION_STORE_LOCATION);
-  });
-
   describe('create', () => {
     it('should call callback on success', () => {
       const accessToken = 'accessToken';
