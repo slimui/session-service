@@ -56,13 +56,26 @@ describe('server', () => {
       const call = {
         request: { accessToken },
       };
-      const token = jwt.sign({ sessionId: uniqueId }, secret);
       return create(call, cb)
         .then(() => {
           expect(cb)
             .toBeCalledWith(undefined, {
-              token,
+              token: jwt.fakeToken,
             });
+        });
+    });
+
+    it('should handle JWT sign failure', () => {
+      const accessToken = 'accessToken';
+      const call = {
+        request: { accessToken },
+      };
+      process.env.SIGNING_SECRET = 'fail';
+      const cb = jest.fn();
+      return create(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalledWith('failed to sign');
         });
     });
   });
