@@ -1,14 +1,6 @@
-import uuid from 'uuid';
+import { v4, uniqueId } from 'uuid';
 import Redis from 'ioredis';
 import create from './create';
-
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'unique_id'),
-}));
-
-jest.mock('ioredis', () => ({
-  set: jest.fn(() => Promise.resolve()),
-}));
 
 describe('create', () => {
   it('should call callback on success', () => {
@@ -30,9 +22,9 @@ describe('create', () => {
       request: { accessToken },
     };
     create(call, () => {});
-    expect(uuid.v4)
+    expect(v4)
       .toBeCalled();
-    expect(Redis.set)
-      .toBeCalledWith('unique_id', accessToken);
+    expect(Redis.prototype.set)
+      .toBeCalledWith(uniqueId, accessToken);
   });
 });
