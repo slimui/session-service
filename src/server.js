@@ -55,7 +55,8 @@ export const get = (call, cb) =>
 
 export const destroy = (call, cb) =>
   redis.del(call.request.sessionId)
-    .then(() => cb());
+    .then(() => cb())
+    .catch(err => cb(err));
 
 const server = new grpc.Server();
 server.addProtoService(proto.sessions.Sessions.service, { create });

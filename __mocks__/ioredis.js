@@ -12,5 +12,10 @@ Redis.prototype.get = jest.fn((key) => {
   }
   return Promise.resolve(Redis.fakeAccessToken);
 });
-Redis.prototype.del = jest.fn(() => Promise.resolve());
+Redis.prototype.del = jest.fn((key) => {
+  if (key === 'fail') {
+    return Promise.reject('failed to delete session');
+  }
+  return Promise.resolve();
+});
 export default Redis;

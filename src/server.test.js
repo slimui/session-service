@@ -253,5 +253,20 @@ describe('server', () => {
             .toBeCalledWith(sessionId);
         });
     });
+
+    it('should handle redis delete failure', () => {
+      const sessionId = 'fail';
+      const call = {
+        request: {
+          sessionId,
+        },
+      };
+      const cb = jest.fn();
+      return destroy(call, cb)
+        .then(() => {
+          expect(cb)
+            .toBeCalledWith('failed to delete session');
+        });
+    });
   });
 });
