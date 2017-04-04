@@ -16,7 +16,7 @@ export const create = (call, cb) => {
       resolve(accessToken);
     }
   })
-    .then(accessToken => redis.set(sessionId, accessToken))
+    .then(accessToken => redis.set(sessionId, { accessToken }))
     .then(() => new Promise((resolve, reject) => {
       jwt.sign({ sessionId }, process.env.SIGNING_SECRET, {}, (err, token) => {
         if (err) {
@@ -41,7 +41,7 @@ export const get = (call, cb) =>
     });
   })
     .then(({ sessionId }) => redis.get(sessionId))
-    .then(accessToken => new Promise((resolve, reject) => {
+    .then(({ accessToken }) => new Promise((resolve, reject) => {
       jwt.sign({ accessToken }, process.env.SIGNING_SECRET, {}, (err, token) => {
         if (err) {
           reject(err);

@@ -51,7 +51,7 @@ describe('server', () => {
       expect(v4)
         .toBeCalled();
       expect(Redis.prototype.set)
-        .toBeCalledWith(uniqueId, accessToken);
+        .toBeCalledWith(uniqueId, { accessToken });
     });
 
     it('should return a JWT token with the session jwt', () => {

@@ -1,7 +1,7 @@
 const Redis = jest.genMockFromModule('ioredis');
 Redis.fakeAccessToken = 'fakeAccessToken';
 Redis.prototype.set = jest.fn((key, value) => {
-  if (value === 'fail') {
+  if (value.accessToken === 'fail') {
     return Promise.reject('failed to set session');
   }
   return Promise.resolve();
@@ -10,7 +10,7 @@ Redis.prototype.get = jest.fn((key) => {
   if (key === 'fail') {
     return Promise.reject('failed to get session');
   }
-  return Promise.resolve(Redis.fakeAccessToken);
+  return Promise.resolve({ accessToken: Redis.fakeAccessToken });
 });
 Redis.prototype.del = jest.fn((key) => {
   if (key === 'fail') {
