@@ -50,7 +50,7 @@ describe('server', () => {
       create(call, () => {});
       expect(v4)
         .toBeCalled();
-      expect(Redis.prototype.set)
+      expect(Redis.prototype.hmset)
         .toBeCalledWith(uniqueId, { accessToken });
     });
 
@@ -115,7 +115,7 @@ describe('server', () => {
       const cb = jest.fn();
       const call = {
         request: {
-          jwt: fakeJWT,
+          token: fakeJWT,
         },
       };
       return get(call, cb)
@@ -129,7 +129,7 @@ describe('server', () => {
       const fakeJWT = 'fakeJWT';
       const call = {
         request: {
-          jwt: fakeJWT,
+          token: fakeJWT,
         },
       };
       return get(call, () => {})
@@ -143,12 +143,12 @@ describe('server', () => {
       const fakeJWT = 'fakeJWT';
       const call = {
         request: {
-          jwt: fakeJWT,
+          token: fakeJWT,
         },
       };
       return get(call, () => {})
         .then(() => {
-          expect(Redis.prototype.get)
+          expect(Redis.prototype.hgetall)
             .toBeCalledWith(jwt.fakeSessionId);
         });
     });
@@ -157,7 +157,7 @@ describe('server', () => {
       const fakeJWT = 'fakeJWT';
       const call = {
         request: {
-          jwt: fakeJWT,
+          token: fakeJWT,
         },
       };
       const cb = jest.fn();
@@ -179,7 +179,7 @@ describe('server', () => {
       const fakeJWT = 'fakeJWT';
       const call = {
         request: {
-          jwt: fakeJWT,
+          token: fakeJWT,
         },
       };
       process.env.JWT_SECRET = 'fail';
@@ -195,7 +195,7 @@ describe('server', () => {
       const fakeJWT = 'fakeJWT';
       const call = {
         request: {
-          jwt: fakeJWT,
+          token: fakeJWT,
         },
       };
       process.env.JWT_SECRET = 'anotherfail';
@@ -211,7 +211,7 @@ describe('server', () => {
       const fakeJWT = 'fakeJWT';
       const call = {
         request: {
-          jwt: fakeJWT,
+          token: fakeJWT,
         },
       };
       process.env.JWT_SECRET = 'redisfail';

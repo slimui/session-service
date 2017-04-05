@@ -4,7 +4,8 @@ import { v4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 
 const proto = grpc.load('./session.proto');
-const redis = new Redis(process.env.SESSION_STORE_LOCATION);
+const redis = new Redis('session-redis');
+
 
 export const create = (call, cb) => {
   const sessionId = v4();
@@ -16,7 +17,7 @@ export const create = (call, cb) => {
       resolve(accessToken);
     }
   })
-    .then(accessToken => redis.set(sessionId, { accessToken }))
+    .then(accessToken => redis.hmset(sessionId, { accessToken }))
     .then(() => new Promise((resolve, reject) => {
       jwt.sign({ sessionId }, process.env.JWT_SECRET, {}, (err, token) => {
         if (err) {
@@ -32,7 +33,7 @@ export const create = (call, cb) => {
 
 export const get = (call, cb) =>
   new Promise((resolve, reject) => {
-    jwt.verify(call.request.jwt, process.env.JWT_SECRET, {}, (err, payload) => {
+    jwt.verify(call.request.token, process.env.JWT_SECRET, {}, (err, payload) => {
       if (err) {
         reject(err);
       } else {
@@ -40,9 +41,9 @@ export const get = (call, cb) =>
       }
     });
   })
-    .then(({ sessionId }) => redis.get(sessionId))
-    .then(({ accessToken }) => new Promise((resolve, reject) => {
-      jwt.sign({ accessToken }, process.env.JWT_SECRET, {}, (err, token) => {
+    .then(({ sessionId }) => redis.hgetall(sessionId))
+    .then(session => new Promise((resolve, reject) => {
+      jwt.sign(session, process.env.JWT_SECRET, {}, (err, token) => {
         if (err) {
           reject(err);
         } else {
