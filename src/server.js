@@ -18,7 +18,7 @@ export const create = (call, cb) => {
   })
     .then(accessToken => redis.set(sessionId, { accessToken }))
     .then(() => new Promise((resolve, reject) => {
-      jwt.sign({ sessionId }, process.env.SIGNING_SECRET, {}, (err, token) => {
+      jwt.sign({ sessionId }, process.env.JWT_SECRET, {}, (err, token) => {
         if (err) {
           reject(err);
         } else {
@@ -32,7 +32,7 @@ export const create = (call, cb) => {
 
 export const get = (call, cb) =>
   new Promise((resolve, reject) => {
-    jwt.verify(call.request.jwt, process.env.SIGNING_SECRET, {}, (err, payload) => {
+    jwt.verify(call.request.jwt, process.env.JWT_SECRET, {}, (err, payload) => {
       if (err) {
         reject(err);
       } else {
@@ -42,7 +42,7 @@ export const get = (call, cb) =>
   })
     .then(({ sessionId }) => redis.get(sessionId))
     .then(({ accessToken }) => new Promise((resolve, reject) => {
-      jwt.sign({ accessToken }, process.env.SIGNING_SECRET, {}, (err, token) => {
+      jwt.sign({ accessToken }, process.env.JWT_SECRET, {}, (err, token) => {
         if (err) {
           reject(err);
         } else {

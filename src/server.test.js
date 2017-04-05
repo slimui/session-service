@@ -11,7 +11,7 @@ import {
 describe('server', () => {
   const secret = 's3cr3t';
   beforeEach(() => {
-    process.env.SIGNING_SECRET = secret;
+    process.env.JWT_SECRET = secret;
   });
   it('should start grpc server', () => {
     expect(grpc.Server.prototype.start)
@@ -74,7 +74,7 @@ describe('server', () => {
       const call = {
         request: { accessToken },
       };
-      process.env.SIGNING_SECRET = 'fail';
+      process.env.JWT_SECRET = 'fail';
       const cb = jest.fn();
       return create(call, cb)
         .then(() => {
@@ -182,7 +182,7 @@ describe('server', () => {
           jwt: fakeJWT,
         },
       };
-      process.env.SIGNING_SECRET = 'fail';
+      process.env.JWT_SECRET = 'fail';
       const cb = jest.fn();
       return get(call, cb)
         .then(() => {
@@ -198,7 +198,7 @@ describe('server', () => {
           jwt: fakeJWT,
         },
       };
-      process.env.SIGNING_SECRET = 'anotherfail';
+      process.env.JWT_SECRET = 'anotherfail';
       const cb = jest.fn();
       return get(call, cb)
         .then(() => {
@@ -214,7 +214,7 @@ describe('server', () => {
           jwt: fakeJWT,
         },
       };
-      process.env.SIGNING_SECRET = 'redisfail';
+      process.env.JWT_SECRET = 'redisfail';
       const cb = jest.fn();
       return get(call, cb)
         .then(() => {
