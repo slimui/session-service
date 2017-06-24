@@ -1,3 +1,5 @@
+// NOTE: this test will break since it's expecting GRPC
+// saving this to write tests after migrating to micro-rpc
 import Redis from 'ioredis';
 import jwt from 'jsonwebtoken';
 import { v4, uniqueId } from 'uuid';

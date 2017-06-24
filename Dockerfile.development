@@ -4,9 +4,10 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
 RUN npm install -g nodemon
+RUN npm install -g micro
 
-EXPOSE 50051
+EXPOSE 80
 
 ENV NODE_ENV development
 
-CMD nodemon --exec 'npm start'
+CMD nodemon --exec 'micro -p 80'
