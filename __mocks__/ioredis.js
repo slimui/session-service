@@ -18,4 +18,4 @@ Redis.prototype.del = jest.fn((key) => {
   }
   return Promise.resolve();
 });
-export default Redis;
+module.exports = Redis;

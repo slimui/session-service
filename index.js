@@ -8,7 +8,7 @@ const redis = new Redis('session-redis');
 const create = ({ session }) => {
   const sessionId = v4();
   if (!session || !(session instanceof Object)) {
-    throw createError({ message: 'Please specify a sesssion object' });
+    throw createError({ message: 'please specify a sesssion object' });
   }
   return redis.hmset(sessionId, session)
     .then(() => new Promise((resolve, reject) => {
@@ -19,7 +19,10 @@ const create = ({ session }) => {
           resolve({ token });
         }
       });
-    }));
+    }))
+    .catch((err) => {
+      throw createError({ message: err });
+    });
 };
 
 const get = ({ token }) => new Promise((resolve, reject) => {
@@ -40,9 +43,16 @@ const get = ({ token }) => new Promise((resolve, reject) => {
         resolve({ token: sessionToken });
       }
     });
-  }));
+  }))
+  .catch((err) => {
+    throw createError({ message: err });
+  });
 
-const destroy = ({ sessionId }) => redis.del(sessionId);
+const destroy = ({ sessionId }) =>
+  redis.del(sessionId)
+    .catch((err) => {
+      throw createError({ message: err });
+    });
 
 
 module.exports = rpc(

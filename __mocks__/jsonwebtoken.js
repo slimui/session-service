@@ -21,4 +21,4 @@ jwt.verify = jest.fn((token, secretOrPublicKey, options, cb) => {
     });
   }
 });
-export default jwt;
+module.exports = jwt;
