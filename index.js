@@ -8,7 +8,7 @@ const redis = new Redis('session-redis');
 const create = ({ session }) => {
   const sessionId = v4();
   if (!session || !(session instanceof Object)) {
-    throw createError({ message: 'please specify a sesssion object' });
+    throw createError({ message: 'please specify a session object' });
   }
   return redis.hmset(sessionId, session)
     .then(() => new Promise((resolve, reject) => {
@@ -48,6 +48,30 @@ const get = ({ token }) => new Promise((resolve, reject) => {
     throw createError({ message: err });
   });
 
+
+const update = ({ token, session }) => {
+  if (!token) {
+    throw createError({ message: 'please specify a token' });
+  }
+  if (!session || !(session instanceof Object)) {
+    throw createError({ message: 'please specify a session object' });
+  }
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(payload);
+      }
+    });
+  })
+    .then(({ sessionId }) => redis.hmset(sessionId, session))
+    .then(() => 'OK')
+    .catch((err) => {
+      throw createError({ message: err });
+    });
+};
+
 const destroy = ({ sessionId }) =>
   redis.del(sessionId)
     .catch((err) => {
@@ -58,5 +82,5 @@ const destroy = ({ sessionId }) =>
 module.exports = rpc(
   method('create', create),
   method('get', get),
-  // method('update', update), // TODO: replace session object
+  method('update', update),
   method('destroy', destroy));

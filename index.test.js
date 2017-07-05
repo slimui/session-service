@@ -96,7 +96,7 @@ describe('service', () => {
       }
     });
 
-    it('should handle missing accessToken', async () => {
+    it('should handle missing session', async () => {
       const url = await listen(microService);
       try {
         await request({
@@ -110,7 +110,7 @@ describe('service', () => {
         });
       } catch (err) {
         expect(err.error)
-          .toBe('please specify a sesssion object');
+          .toBe('please specify a session object');
       }
     });
   });
@@ -233,8 +233,141 @@ describe('service', () => {
   });
 
   describe('update', () => {
-    it('should update a session', () => {
+    it('should verify jwt token', async () => {
+      const fakeJWT = 'fakeJWT';
+      const session = {
+        isHappening: 'yes',
+      };
+      const url = await listen(microService);
+      await request({
+        method: 'POST',
+        uri: url,
+        body: {
+          name: 'update',
+          args: JSON.stringify({
+            token: fakeJWT,
+            session,
+          }),
+        },
+        json: true,
+      });
+      expect(jwt.verify)
+        .toBeCalledWith(fakeJWT, secret, {}, jasmine.any(Function));
+    });
 
+    it('should update a session', async () => {
+      const url = await listen(microService);
+      const fakeJWT = 'fakeJWT';
+      const session = {
+        isHappening: 'yes',
+      };
+      const result = await request({
+        method: 'POST',
+        uri: url,
+        body: {
+          name: 'update',
+          args: JSON.stringify({
+            token: fakeJWT,
+            session,
+          }),
+        },
+        json: true,
+      });
+      expect(result.result)
+        .toBe('OK');
+      expect(Redis.prototype.hmset)
+        .toBeCalledWith(jwt.fakeSessionId, session);
+    });
+
+    it('should handle jwt verify failures', async () => {
+      process.env.JWT_SECRET = 'fail';
+      const fakeJWT = 'fakeJWT';
+      const session = {
+        isHappening: 'yes',
+      };
+      const url = await listen(microService);
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'update',
+            args: JSON.stringify({
+              token: fakeJWT,
+              session,
+            }),
+          },
+          json: true,
+        });
+      } catch (err) {
+        expect(err.error)
+          .toBe('failed to verify');
+      }
+    });
+
+    it('should handle a Redis set failure', async () => {
+      const url = await listen(microService);
+      const fakeJWT = 'fakeJWT';
+      const session = {
+        accessToken: 'fail',
+      };
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'update',
+            args: JSON.stringify({
+              token: fakeJWT,
+              session,
+            }),
+          },
+          json: true,
+        });
+      } catch (err) {
+        expect(err.error)
+          .toBe('failed to set session');
+      }
+    });
+
+    it('should handle missing session', async () => {
+      const url = await listen(microService);
+      const fakeJWT = 'fakeJWT';
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'update',
+            args: JSON.stringify({ token: fakeJWT }),
+          },
+          json: true,
+        });
+      } catch (err) {
+        expect(err.error)
+          .toBe('please specify a session object');
+      }
+    });
+
+    it('should handle missing token', async () => {
+      const url = await listen(microService);
+      const session = {
+        accessToken: 'fail',
+      };
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'update',
+            args: JSON.stringify({ session }),
+          },
+          json: true,
+        });
+      } catch (err) {
+        expect(err.error)
+          .toBe('please specify a token');
+      }
     });
   });
 
