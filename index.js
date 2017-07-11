@@ -21,7 +21,7 @@ const create = ({ session }) => {
       });
     }))
     .catch((err) => {
-      throw createError({ message: err });
+      throw createError({ message: err.message });
     });
 };
 
@@ -45,7 +45,7 @@ const get = ({ token }) => new Promise((resolve, reject) => {
     });
   }))
   .catch((err) => {
-    throw createError({ message: err });
+    throw createError({ message: err.message });
   });
 
 
@@ -68,15 +68,26 @@ const update = ({ token, session }) => {
     .then(({ sessionId }) => redis.hmset(sessionId, session))
     .then(() => 'OK')
     .catch((err) => {
-      throw createError({ message: err });
+      throw createError({ message: err.message });
     });
 };
 
-const destroy = ({ sessionId }) =>
-  redis.del(sessionId)
-    .catch((err) => {
-      throw createError({ message: err });
-    });
+const destroy = ({ token }) => new Promise((resolve, reject) => {
+  jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
+    if (err) {
+      reject(err);
+    } else {
+      resolve(payload);
+    }
+  });
+})
+  .then(({ sessionId }) => redis.del(sessionId))
+  .then(result =>
+      (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
+  .then(() => 'OK')
+  .catch((err) => {
+    throw createError({ message: err.message });
+  });
 
 
 module.exports = rpc(

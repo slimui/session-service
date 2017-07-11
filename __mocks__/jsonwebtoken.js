@@ -3,17 +3,21 @@ jwt.fakeToken = 'fakeToken';
 jwt.fakeSessionId = 'fakeSessionId';
 jwt.sign = jest.fn((payload, secretOrPrivateKey, options, cb) => {
   if (secretOrPrivateKey === 'fail' || secretOrPrivateKey === 'anotherfail') {
-    cb('failed to sign');
+    cb(new Error('failed to sign'));
   } else {
     cb(undefined, jwt.fakeToken);
   }
 });
 jwt.verify = jest.fn((token, secretOrPublicKey, options, cb) => {
   if (secretOrPublicKey === 'fail') {
-    cb('failed to verify');
+    cb(new Error('failed to verify'));
   } else if (secretOrPublicKey === 'redisfail') {
     cb(undefined, {
       sessionId: 'fail',
+    });
+  } else if (secretOrPublicKey === 'failWithZero') {
+    cb(undefined, {
+      sessionId: 'failWithZero',
     });
   } else {
     cb(undefined, {

@@ -373,19 +373,19 @@ describe('service', () => {
 
   describe('destroy', () => {
     it('should delete session from redis by key', async () => {
-      const sessionId = 'sessionId';
+      const token = 'fakeJWT';
       const url = await listen(microService);
       await request({
         method: 'POST',
         uri: url,
         body: {
           name: 'destroy',
-          args: JSON.stringify({ sessionId }),
+          args: JSON.stringify({ token }),
         },
         json: true,
       });
       expect(Redis.prototype.del)
-        .toBeCalledWith(sessionId);
+        .toBeCalledWith(jwt.fakeSessionId);
     });
 
     it('should handle redis delete failure', async () => {
@@ -404,6 +404,50 @@ describe('service', () => {
       } catch (err) {
         expect(err.error)
           .toBe('failed to delete session');
+      }
+    });
+
+    it('should handle jwt verify failures', async () => {
+      process.env.JWT_SECRET = 'fail';
+      const fakeJWT = 'fakeJWT';
+      const url = await listen(microService);
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'destroy',
+            args: JSON.stringify({
+              token: fakeJWT,
+            }),
+          },
+          json: true,
+        });
+      } catch (err) {
+        expect(err.error)
+          .toBe('failed to verify');
+      }
+    });
+
+    it('should handle redis fail', async () => {
+      process.env.JWT_SECRET = 'failWithZero';
+      const fakeJWT = 'fakeJWT';
+      const url = await listen(microService);
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'destroy',
+            args: JSON.stringify({
+              token: fakeJWT,
+            }),
+          },
+          json: true,
+        });
+      } catch (err) {
+        expect(err.error)
+          .toBe('there was an issue destroying the session');
       }
     });
   });
