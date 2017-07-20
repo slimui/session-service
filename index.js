@@ -1,9 +1,10 @@
+const micro = require('micro');
 const Redis = require('ioredis');
 const { v4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const { rpc, method, createError } = require('@bufferapp/micro-rpc');
 
-const redis = new Redis('session-redis');
+const redis = new Redis(process.env.REDIS_URI);
 
 const create = ({ session }) => {
   const sessionId = v4();
@@ -90,8 +91,13 @@ const destroy = ({ token }) => new Promise((resolve, reject) => {
   });
 
 
-module.exports = rpc(
+const service = rpc(
   method('create', create),
   method('get', get),
   method('update', update),
-  method('destroy', destroy));
+  method('destroy', destroy),
+);
+
+const server = micro(service);
+
+server.listen(80);

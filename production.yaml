@@ -1,0 +1,70 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  namespace: buffer
+  name: session-service-1
+  labels:
+    app: session-service
+    version: '1'
+    track: stable
+spec:
+  replicas: 1
+  minReadySeconds: 10
+  strategy:
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: session-service
+        version: '1'
+        track: stable
+    spec:
+      containers:
+      - name: session-service
+        image: bufferapp/session-service:beta-5
+        ports:
+        - containerPort: 80
+        env:
+        - name: JWT_SECRET
+          value: beta-secret
+        - name: REDIS_URI
+          value: 0.0.0.0
+        # livenessProbe:
+        #   httpGet:
+        #     path: /health-check
+        #     port: 8080
+        #   initialDelaySeconds: 15
+        #   timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+          limits:
+            cpu: 100m
+            memory: 150Mi
+      - name: redis
+        image: redis:3.2.9
+        ports:
+        - containerPort: 6379
+      imagePullSecrets:
+        - name: dhbufferapp
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: session-service-1
+  namespace: buffer
+  labels:
+    app: session-service
+    version: '1'
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: session-service
+    version: '1'
