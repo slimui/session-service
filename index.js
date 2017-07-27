@@ -4,6 +4,7 @@ const Redis = require('ioredis');
 const { v4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const { rpc, method, createError } = require('@bufferapp/micro-rpc');
+const logMiddleware = require('@bufferapp/logger/middleware');
 const { apiError } = require('./middleware');
 
 const app = express();
@@ -89,6 +90,8 @@ const destroy = ({ token }) => new Promise((resolve, reject) => {
   .then(result =>
       (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
   .then(() => 'OK');
+
+app.use(logMiddleware({ name: 'SessionService' }));
 
 app.post('*', (req, res, next) => {
   rpc(

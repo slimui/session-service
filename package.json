@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/bufferapp/session-service#readme",
   "dependencies": {
+    "@bufferapp/logger": "0.7.0",
     "@bufferapp/micro-rpc": "0.1.6",
     "bugsnag": "1.11.0",
     "express": "4.15.3",
