@@ -24,10 +24,10 @@ const create = ({ session }) => {
     throw createError({ message: 'please specify a session object' });
   }
   return redis.hmset(sessionId, session)
-    .then(() => new Promise((resolve) => {
+    .then(() => new Promise((resolve, reject) => {
       jwt.sign({ sessionId }, process.env.JWT_SECRET, {}, (err, token) => {
         if (err) {
-          throw createError({ message: err.message });
+          reject(err);
         } else {
           resolve({ token });
         }
@@ -35,10 +35,10 @@ const create = ({ session }) => {
     }));
 };
 
-const get = ({ token }) => new Promise((resolve) => {
+const get = ({ token }) => new Promise((resolve, reject) => {
   jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
     if (err) {
-      throw createError({ message: err.message });
+      reject(err);
     } else {
       resolve(payload);
     }
@@ -63,10 +63,10 @@ const update = ({ token, session }) => {
   if (!session || !(session instanceof Object)) {
     throw createError({ message: 'please specify a session object' });
   }
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
       if (err) {
-        throw createError({ message: err.message });
+        reject(err);
       } else {
         resolve(payload);
       }
@@ -76,10 +76,10 @@ const update = ({ token, session }) => {
     .then(() => 'OK');
 };
 
-const destroy = ({ token }) => new Promise((resolve) => {
+const destroy = ({ token }) => new Promise((resolve, reject) => {
   jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
     if (err) {
-      throw createError({ message: err.message });
+      reject(err);
     } else {
       resolve(payload);
     }
