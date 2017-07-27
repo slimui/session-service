@@ -100,6 +100,11 @@ app.post('*', (req, res, next) => {
     .catch(err => next(err));
 });
 
+app.get('/health-check', (req, res) => {
+  redis.ping()
+    .then(() => res.status(200).json({ status: 'awesome' }))
+    .catch(() => res.status(500).json({ status: 'cannot reach redis' }));
+});
 
 app.use(apiError);
 
