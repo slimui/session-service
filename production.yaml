@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: session-service
-        image: bufferapp/session-service:beta-5
+        image: bufferapp/session-service:beta-6
         ports:
         - containerPort: 80
         env:
@@ -35,12 +35,12 @@ spec:
             secretKeyRef:
               key: bugsnag
               name: buffer-session-service-keys
-        # livenessProbe:
-        #   httpGet:
-        #     path: /health-check
-        #     port: 8080
-        #   initialDelaySeconds: 15
-        #   timeoutSeconds: 1
+        livenessProbe:
+          httpGet:
+            path: /health-check
+            port: 80
+          initialDelaySeconds: 15
+          timeoutSeconds: 1
         resources:
           requests:
             cpu: 100m
