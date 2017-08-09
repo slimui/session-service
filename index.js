@@ -29,13 +29,15 @@ const create = ({ session }) => {
     throw createError({ message: 'please specify a session object' });
   }
   return redis.hmset(sessionId, session)
-    .then(() => jwtSign({ sessionId }, process.env.JWT_SECRET));
+    .then(() => jwtSign({ sessionId }, process.env.JWT_SECRET))
+    .then(sessionToken => ({ token: sessionToken }));
 };
 
-const get = ({ token }) => jwtVerify(token, process.env.JWT_SECRET)
-  .then(({ sessionId }) => redis.hgetall(sessionId))
-  .then(session => jwtSign(session, process.env.JWT_SECRET));
-
+const get = ({ token }) =>
+  jwtVerify(token, process.env.JWT_SECRET)
+    .then(({ sessionId }) => redis.hgetall(sessionId))
+    .then(session => jwtSign(session, process.env.JWT_SECRET))
+    .then(sessionToken => ({ token: sessionToken }));
 
 const update = ({ token, session }) => {
   if (!token) {
@@ -49,11 +51,12 @@ const update = ({ token, session }) => {
     .then(() => 'OK');
 };
 
-const destroy = ({ token }) => jwtVerify(token, process.env.JWT_SECRET)
-  .then(({ sessionId }) => redis.del(sessionId))
-  .then(result =>
-      (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
-  .then(() => 'OK');
+const destroy = ({ token }) =>
+  jwtVerify(token, process.env.JWT_SECRET)
+    .then(({ sessionId }) => redis.del(sessionId))
+    .then(result =>
+        (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
+    .then(() => 'OK');
 
 app.use(logMiddleware({ name: 'SessionService' }));
 
