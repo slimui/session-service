@@ -1,3 +1,4 @@
+const util = require('util');
 const bugsnag = require('bugsnag');
 const express = require('express');
 const Redis = require('ioredis');
@@ -19,42 +20,21 @@ if (isProduction && process.env.BUGSNAG_KEY) {
 
 const redis = new Redis(process.env.REDIS_URI);
 
+const jwtSign = util.promisify(jwt.sign);
+const jwtVerify = util.promisify(jwt.verify);
+
 const create = ({ session }) => {
   const sessionId = v4();
   if (!session || !(session instanceof Object)) {
     throw createError({ message: 'please specify a session object' });
   }
   return redis.hmset(sessionId, session)
-    .then(() => new Promise((resolve, reject) => {
-      jwt.sign({ sessionId }, process.env.JWT_SECRET, {}, (err, token) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve({ token });
-        }
-      });
-    }));
+    .then(() => jwtSign({ sessionId }, process.env.JWT_SECRET));
 };
 
-const get = ({ token }) => new Promise((resolve, reject) => {
-  jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
-    if (err) {
-      reject(err);
-    } else {
-      resolve(payload);
-    }
-  });
-})
+const get = ({ token }) => jwtVerify(token, process.env.JWT_SECRET)
   .then(({ sessionId }) => redis.hgetall(sessionId))
-  .then(session => new Promise((resolve, reject) => {
-    jwt.sign(session, process.env.JWT_SECRET, {}, (err, sessionToken) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve({ token: sessionToken });
-      }
-    });
-  }));
+  .then(session => jwtSign(session, process.env.JWT_SECRET));
 
 
 const update = ({ token, session }) => {
@@ -64,28 +44,12 @@ const update = ({ token, session }) => {
   if (!session || !(session instanceof Object)) {
     throw createError({ message: 'please specify a session object' });
   }
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(payload);
-      }
-    });
-  })
+  return jwtVerify(token, process.env.JWT_SECRET)
     .then(({ sessionId }) => redis.hmset(sessionId, session))
     .then(() => 'OK');
 };
 
-const destroy = ({ token }) => new Promise((resolve, reject) => {
-  jwt.verify(token, process.env.JWT_SECRET, {}, (err, payload) => {
-    if (err) {
-      reject(err);
-    } else {
-      resolve(payload);
-    }
-  });
-})
+const destroy = ({ token }) => jwtVerify(token, process.env.JWT_SECRET)
   .then(({ sessionId }) => redis.del(sessionId))
   .then(result =>
       (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
