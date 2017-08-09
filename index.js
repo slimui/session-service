@@ -2,7 +2,7 @@ const util = require('util');
 const bugsnag = require('bugsnag');
 const express = require('express');
 const Redis = require('ioredis');
-const { v4 } = require('uuid');
+const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
 const { rpc, method, createError } = require('@bufferapp/micro-rpc');
 const logMiddleware = require('@bufferapp/logger/middleware');
@@ -24,7 +24,7 @@ const jwtSign = util.promisify(jwt.sign);
 const jwtVerify = util.promisify(jwt.verify);
 
 const create = ({ session }) => {
-  const sessionId = v4();
+  const sessionId = uuid();
   if (!session || !(session instanceof Object)) {
     throw createError({ message: 'please specify a session object' });
   }
