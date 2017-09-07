@@ -8,7 +8,7 @@ metadata:
     version: '1'
     track: stable
 spec:
-  replicas: 1
+  replicas: 3
   minReadySeconds: 10
   strategy:
     rollingUpdate:
