@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: session-service
-        image: bufferapp/session-service:beta-6
+        image: bufferapp/session-service:f0448bf3c57921f280f6dac9977d9f8db132f28a
         ports:
         - containerPort: 80
         env:
