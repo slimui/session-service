@@ -26,6 +26,8 @@ spec:
         ports:
         - containerPort: 80
         env:
+        - name: RELEASE_TRACK
+          value: stable
         - name: JWT_SECRET
           value: beta-secret
         - name: REDIS_URI

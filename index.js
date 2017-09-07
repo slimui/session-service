@@ -6,6 +6,8 @@ const uuid = require('uuid/v4');
 const jwt = require('jsonwebtoken');
 const { rpc, method, createError } = require('@bufferapp/micro-rpc');
 const logMiddleware = require('@bufferapp/logger/middleware');
+const connectDatadog = require('@bufferapp/connect-datadog');
+const { StatsD } = require('node-dogstatsd');
 const { apiError } = require('./middleware');
 
 const app = express();
@@ -16,6 +18,13 @@ app.set('isProduction', isProduction);
 if (isProduction && process.env.BUGSNAG_KEY) {
   bugsnag.register(process.env.BUGSNAG_KEY);
   app.set('bugsnag', bugsnag);
+} else if (isProduction) {
+  const dogstatsd = new StatsD('dd-agent.default');
+  app.use(connectDatadog({
+    dogstatsd,
+    response_code: true,
+    tags: ['app:session-service', `track:${process.env.RELEASE_TRACK || 'dev'}`],
+  }));
 }
 
 const redis = new Redis(process.env.REDIS_URI);

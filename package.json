@@ -36,6 +36,7 @@
   },
   "homepage": "https://github.com/bufferapp/session-service#readme",
   "dependencies": {
+    "@bufferapp/connect-datadog": "0.2.0",
     "@bufferapp/logger": "0.7.0",
     "@bufferapp/micro-rpc": "0.1.6",
     "bugsnag": "1.11.0",
@@ -43,6 +44,7 @@
     "ioredis": "2.5.0",
     "jsonwebtoken": "7.4.2",
     "micro": "7.3.3",
+    "node-dogstatsd": "0.0.6",
     "uuid": "3.0.1"
   },
   "devDependencies": {
