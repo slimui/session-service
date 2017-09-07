@@ -18,7 +18,9 @@ app.set('isProduction', isProduction);
 if (isProduction && process.env.BUGSNAG_KEY) {
   bugsnag.register(process.env.BUGSNAG_KEY);
   app.set('bugsnag', bugsnag);
-} else if (isProduction) {
+}
+
+if (isProduction) {
   const dogstatsd = new StatsD('dd-agent.default');
   app.use(connectDatadog({
     dogstatsd,
