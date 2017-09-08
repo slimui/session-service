@@ -25,6 +25,7 @@ if (isProduction) {
   app.use(connectDatadog({
     dogstatsd,
     response_code: true,
+    bufferRPC: true,
     tags: ['app:session-service', `track:${process.env.RELEASE_TRACK || 'dev'}`],
   }));
 }
