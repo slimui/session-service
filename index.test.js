@@ -2,12 +2,13 @@ import micro from 'micro';
 import listen from 'test-listen';
 import request from 'request-promise';
 import Redis from 'ioredis';
+import RedisLock from 'ioredis-lock';
 import jwt from 'jsonwebtoken';
-import { v4, uniqueId } from 'uuid';
-import service from './';
+import uuid from 'uuid/v4';
+import { app as service, monthInSeconds } from './';
 
 // rewrite these with express server
-describe.skip('service', () => {
+describe('service', () => {
   const secret = 's3cr3t';
   let microService;
 
@@ -33,10 +34,10 @@ describe.skip('service', () => {
         },
         json: true,
       });
-      expect(v4)
+      expect(uuid)
         .toBeCalled();
-      expect(Redis.prototype.hmset)
-        .toBeCalledWith(uniqueId, session);
+      expect(Redis.prototype.setex)
+        .toBeCalledWith(uuid.uniqueId, monthInSeconds, JSON.stringify(session));
     });
 
     it('should return a JWT token with the session jwt', async () => {
@@ -71,8 +72,8 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
-          .toBe('failed to sign');
+        expect(err.error.error)
+          .toEqual('failed to sign');
       }
     });
 
@@ -92,7 +93,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('failed to set session');
       }
     });
@@ -110,7 +111,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('please specify a session object');
       }
     });
@@ -130,7 +131,7 @@ describe.skip('service', () => {
         json: true,
       });
       expect(jwt.verify)
-        .toBeCalledWith(fakeJWT, secret, {}, jasmine.any(Function));
+        .toBeCalledWith(fakeJWT, secret, jasmine.any(Function));
     });
 
     it('should get item from redis', async () => {
@@ -145,8 +146,10 @@ describe.skip('service', () => {
         },
         json: true,
       });
-      expect(Redis.prototype.hgetall)
+      expect(Redis.prototype.get)
         .toBeCalledWith(jwt.fakeSessionId);
+      expect(Redis.prototype.expire)
+        .toBeCalledWith(jwt.fakeSessionId, monthInSeconds);
     });
 
     it('should return an access jwt', async () => {
@@ -162,14 +165,7 @@ describe.skip('service', () => {
         json: true,
       });
       expect(result.result)
-        .toEqual({ token: jwt.fakeToken });
-      expect(jwt.sign)
-        .toBeCalledWith(
-          { accessToken: Redis.fakeAccessToken },
-          secret,
-          {},
-          jasmine.any(Function),
-        );
+        .toEqual(Redis.fakeState);
     });
 
     it('should handle jwt verify failures', async () => {
@@ -187,7 +183,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('failed to verify');
       }
     });
@@ -207,7 +203,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('failed to sign');
       }
     });
@@ -227,7 +223,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('failed to get session');
       }
     });
@@ -253,14 +249,20 @@ describe.skip('service', () => {
         json: true,
       });
       expect(jwt.verify)
-        .toBeCalledWith(fakeJWT, secret, {}, jasmine.any(Function));
+        .toBeCalledWith(
+          fakeJWT,
+          secret,
+          jasmine.any(Function),
+        );
     });
 
     it('should update a session', async () => {
       const url = await listen(microService);
       const fakeJWT = 'fakeJWT';
       const session = {
-        isHappening: 'yes',
+        publish: {
+          isHappening: 'yes',
+        },
       };
       const result = await request({
         method: 'POST',
@@ -274,10 +276,19 @@ describe.skip('service', () => {
         },
         json: true,
       });
+      expect(RedisLock.createLock)
+        .toBeCalledWith(jasmine.any(Object), {
+          timeout: 10000,
+          retries: 3,
+          delay: 100,
+        });
       expect(result.result)
         .toBe('OK');
-      expect(Redis.prototype.hmset)
-        .toBeCalledWith(jwt.fakeSessionId, session);
+      expect(Redis.prototype.setex)
+        .toBeCalledWith(
+          jwt.fakeSessionId,
+          monthInSeconds,
+          JSON.stringify(Object.assign({}, Redis.fakeState, session)));
     });
 
     it('should handle jwt verify failures', async () => {
@@ -301,7 +312,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('failed to verify');
       }
     });
@@ -326,7 +337,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('failed to set session');
       }
     });
@@ -345,7 +356,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('please specify a session object');
       }
     });
@@ -366,8 +377,66 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('please specify a token');
+      }
+    });
+
+    it('should handle lock acquire failure', async () => {
+      process.env.JWT_SECRET = 'lock_acquire_fail';
+      const url = await listen(microService);
+      const fakeJWT = 'fakeJWT';
+      const session = {
+        publish: {
+          isHappening: 'yes',
+        },
+      };
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'update',
+            args: JSON.stringify({
+              token: fakeJWT,
+              session,
+            }),
+          },
+          json: true,
+        });
+        throw Error('this should fail');
+      } catch (err) {
+        expect(err.error.error)
+          .toBe('There was an error aquiring lock to update session');
+      }
+    });
+
+    it('should handle lock release failure', async () => {
+      process.env.JWT_SECRET = 'lock_release_fail';
+      const url = await listen(microService);
+      const fakeJWT = 'fakeJWT';
+      const session = {
+        publish: {
+          isHappening: 'yes',
+        },
+      };
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'update',
+            args: JSON.stringify({
+              token: fakeJWT,
+              session,
+            }),
+          },
+          json: true,
+        });
+        throw new Error('this should fail');
+      } catch (err) {
+        expect(err.error.error)
+          .toBe('There was an error releasing lock to update session');
       }
     });
   });
@@ -425,7 +494,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('failed to verify');
       }
     });
@@ -447,7 +516,7 @@ describe.skip('service', () => {
           json: true,
         });
       } catch (err) {
-        expect(err.error)
+        expect(err.error.error)
           .toBe('there was an issue destroying the session');
       }
     });

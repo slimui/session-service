@@ -1,14 +1,14 @@
 const jwt = jest.genMockFromModule('jsonwebtoken');
 jwt.fakeToken = 'fakeToken';
 jwt.fakeSessionId = 'fakeSessionId';
-jwt.sign = jest.fn((payload, secretOrPrivateKey, options, cb) => {
+jwt.sign = jest.fn((payload, secretOrPrivateKey, cb) => {
   if (secretOrPrivateKey === 'fail' || secretOrPrivateKey === 'anotherfail') {
     cb(new Error('failed to sign'));
   } else {
     cb(undefined, jwt.fakeToken);
   }
 });
-jwt.verify = jest.fn((token, secretOrPublicKey, options, cb) => {
+jwt.verify = jest.fn((token, secretOrPublicKey, cb) => {
   if (secretOrPublicKey === 'fail') {
     cb(new Error('failed to verify'));
   } else if (secretOrPublicKey === 'redisfail') {

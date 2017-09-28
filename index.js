@@ -8,7 +8,12 @@ const { rpc, method, createError } = require('@bufferapp/micro-rpc');
 const logMiddleware = require('@bufferapp/logger/middleware');
 const connectDatadog = require('@bufferapp/connect-datadog');
 const { StatsD } = require('node-dogstatsd');
+const redisLock = require('ioredis-lock');
 const { apiError } = require('./middleware');
+const { mergeSessions } = require('./utils');
+
+module.exports = {};
+
 
 const app = express();
 
@@ -35,42 +40,87 @@ const redis = new Redis(process.env.REDIS_URI);
 const jwtSign = util.promisify(jwt.sign);
 const jwtVerify = util.promisify(jwt.verify);
 
+module.exports.monthInSeconds = 60 * 24 * 31;
+
+
 const create = ({ session }) => {
   const sessionId = uuid();
   if (!session || !(session instanceof Object)) {
     throw createError({ message: 'please specify a session object' });
   }
-  return redis.hmset(sessionId, session)
+  // create a session that expires automatically in a month
+  return redis.setex(sessionId, module.exports.monthInSeconds, JSON.stringify(session))
     .then(() => jwtSign({ sessionId }, process.env.JWT_SECRET))
     .then(sessionToken => ({ token: sessionToken }));
 };
 
-const get = ({ token }) =>
-  jwtVerify(token, process.env.JWT_SECRET)
-    .then(({ sessionId }) => redis.hgetall(sessionId))
-    .then(session => jwtSign(session, process.env.JWT_SECRET))
-    .then(sessionToken => ({ token: sessionToken }));
+const get = async ({ token }) => {
+  const { sessionId } = await jwtVerify(token, process.env.JWT_SECRET);
+  let rawSesion;
+  if (sessionId) {
+    rawSesion = await redis.get(sessionId);
+  }
+  if (rawSesion) {
+    // push the expiration back a month on get
+    await redis.expire(sessionId, module.exports.monthInSeconds);
+    return JSON.parse(rawSesion);
+  }
+  return null;
+};
 
-const update = ({ token, session }) => {
+
+const safeRelease = async (lock) => {
+  try {
+    await lock.release();
+  } catch (err) {
+    throw createError({ message: 'There was an error releasing lock to update session' });
+  }
+};
+
+const update = async ({ token, session }) => {
   if (!token) {
     throw createError({ message: 'please specify a token' });
   }
   if (!session || !(session instanceof Object)) {
     throw createError({ message: 'please specify a session object' });
   }
-  return jwtVerify(token, process.env.JWT_SECRET)
-    .then(({ sessionId }) => redis.hmset(sessionId, session))
-    .then(() => 'OK');
+  const lock = redisLock.createLock(redis, {
+    timeout: 10000,
+    retries: 3,
+    delay: 100,
+  });
+  try {
+    const { sessionId } = await jwtVerify(token, process.env.JWT_SECRET);
+    await lock.acquire(`${sessionId}:lock`);
+    // get the existing session
+    const oldSesion = JSON.parse(await redis.get(sessionId));
+    // merge the existing session with the new session
+    await redis.setex(sessionId, module.exports.monthInSeconds, JSON.stringify(mergeSessions({
+      oldSesion,
+      newSession: session,
+    })));
+  } catch (err) {
+    if (err instanceof redisLock.LockAcquisitionError) {
+      throw createError({ message: 'There was an error aquiring lock to update session' });
+    } else {
+      throw err;
+    }
+  } finally {
+    await safeRelease(lock);
+  }
+  return 'OK';
 };
 
 const destroy = ({ token }) =>
   jwtVerify(token, process.env.JWT_SECRET)
     .then(({ sessionId }) => redis.del(sessionId))
     .then(result =>
-        (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
+      (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
     .then(() => 'OK');
 
-app.use(logMiddleware({ name: 'SessionService' }));
+if (process.env.NODE_ENV !== 'test') {
+  app.use(logMiddleware({ name: 'SessionService' }));
+}
 
 app.post('*', (req, res, next) => {
   rpc(
@@ -90,6 +140,10 @@ app.get('/health-check', (req, res) => {
 
 app.use(apiError);
 
-app.listen(80, () => {
-  console.log('listening on port 80');
-});
+module.exports.app = app;
+
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(80, () => {
+    console.log('listening on port 80');
+  });
+}
