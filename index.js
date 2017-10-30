@@ -10,7 +10,7 @@ const connectDatadog = require('@bufferapp/connect-datadog');
 const { StatsD } = require('node-dogstatsd');
 const redisLock = require('ioredis-lock');
 const { apiError } = require('./middleware');
-const { mergeSessions } = require('./utils');
+const { mergeSessions, filteredSession } = require('./utils');
 
 module.exports = {};
 
@@ -54,7 +54,7 @@ const create = ({ session }) => {
     .then(sessionToken => ({ token: sessionToken }));
 };
 
-const get = async ({ token }) => {
+const get = async ({ token, keys = [] }) => {
   const { sessionId } = await jwtVerify(token, process.env.JWT_SECRET);
   let rawSesion;
   if (sessionId) {
@@ -63,7 +63,11 @@ const get = async ({ token }) => {
   if (rawSesion) {
     // push the expiration back a month on get
     await redis.expire(sessionId, module.exports.monthInSeconds);
-    return JSON.parse(rawSesion);
+    const parsedSession = JSON.parse(rawSesion);
+    return filteredSession({
+      keys,
+      session: parsedSession,
+    });
   }
   return null;
 };

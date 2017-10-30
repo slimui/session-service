@@ -1,5 +1,8 @@
 import deepFreeze from 'deep-freeze';
-import { mergeSessions } from './utils';
+import {
+  mergeSessions,
+  filteredSession,
+} from './utils';
 
 describe('utils', () => {
   describe('mergeSessions', () => {
@@ -79,6 +82,50 @@ describe('utils', () => {
         newSession,
       }))
         .toEqual(expectedResult);
+    });
+  });
+
+  describe('filteredSession', () => {
+    it('should filters keys from session', () => {
+      const keys = ['global'];
+      const globalSessionData = 'some global session data';
+      const session = {
+        global: globalSessionData,
+        otherData: 'other data',
+      };
+      expect(filteredSession({
+        keys,
+        session,
+      }))
+        .toEqual({
+          global: globalSessionData,
+        });
+    });
+
+    it('should not filter when a * is passed in', () => {
+      const keys = ['*'];
+      const session = {
+        global: 'some global session data',
+        otherData: 'other data',
+      };
+      expect(filteredSession({
+        keys,
+        session,
+      }))
+        .toEqual(session);
+    });
+
+    it('should filter multiple values', () => {
+      const keys = ['global', 'otherData'];
+      const session = {
+        global: 'some global session data',
+        otherData: 'other data',
+      };
+      expect(filteredSession({
+        keys,
+        session,
+      }))
+        .toEqual(session);
     });
   });
 });

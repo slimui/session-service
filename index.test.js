@@ -160,7 +160,7 @@ describe('service', () => {
         uri: url,
         body: {
           name: 'get',
-          args: JSON.stringify({ token: fakeJWT }),
+          args: JSON.stringify({ token: fakeJWT, keys: ['*'] }),
         },
         json: true,
       });
