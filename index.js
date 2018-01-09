@@ -42,12 +42,16 @@ const jwtVerify = util.promisify(jwt.verify);
 
 module.exports.monthInSeconds = 60 * 24 * 31;
 
+const tokenizer = '_';
 
-const create = ({ session }) => {
-  const sessionId = uuid();
+const create = ({ session, userId }) => {
   if (!session || !(session instanceof Object)) {
     throw createError({ message: 'please specify a session object' });
   }
+  if (!userId) {
+    throw createError({ message: 'please specify a userId' });
+  }
+  const sessionId = `${userId}${tokenizer}${uuid()}`;
   // create a session that expires automatically in a month
   return redis.setex(sessionId, module.exports.monthInSeconds, JSON.stringify(session))
     .then(() => jwtSign({ sessionId }, process.env.JWT_SECRET))

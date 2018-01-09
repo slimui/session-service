@@ -25,30 +25,38 @@ describe('service', () => {
     it('should create a session', async () => {
       const url = await listen(microService);
       const session = {};
+      const userId = 'userId';
       await request({
         method: 'POST',
         uri: url,
         body: {
           name: 'create',
-          args: JSON.stringify({ session }),
+          args: JSON.stringify({
+            session,
+            userId,
+          }),
         },
         json: true,
       });
       expect(uuid)
         .toBeCalled();
       expect(Redis.prototype.setex)
-        .toBeCalledWith(uuid.uniqueId, monthInSeconds, JSON.stringify(session));
+        .toBeCalledWith(`${userId}_${uuid.uniqueId}`, monthInSeconds, JSON.stringify(session));
     });
 
     it('should return a JWT token with the session jwt', async () => {
       const url = await listen(microService);
       const session = {};
+      const userId = 'userId';
       const result = await request({
         method: 'POST',
         uri: url,
         body: {
           name: 'create',
-          args: JSON.stringify({ session }),
+          args: JSON.stringify({
+            session,
+            userId,
+          }),
         },
         json: true,
       });
@@ -61,13 +69,17 @@ describe('service', () => {
       process.env.JWT_SECRET = 'fail';
       const url = await listen(microService);
       const session = {};
+      const userId = 'userId';
       try {
         await request({
           method: 'POST',
           uri: url,
           body: {
             name: 'create',
-            args: JSON.stringify({ session }),
+            args: JSON.stringify({
+              session,
+              userId,
+            }),
           },
           json: true,
         });
@@ -82,13 +94,17 @@ describe('service', () => {
       const session = {
         accessToken: 'fail',
       };
+      const userId = 'userId';
       try {
         await request({
           method: 'POST',
           uri: url,
           body: {
             name: 'create',
-            args: JSON.stringify({ session }),
+            args: JSON.stringify({
+              session,
+              userId,
+            }),
           },
           json: true,
         });
@@ -113,6 +129,27 @@ describe('service', () => {
       } catch (err) {
         expect(err.error.error)
           .toBe('please specify a session object');
+      }
+    });
+
+    it('should handle missing userId', async () => {
+      const url = await listen(microService);
+      const session = {};
+      try {
+        await request({
+          method: 'POST',
+          uri: url,
+          body: {
+            name: 'create',
+            args: JSON.stringify({
+              session,
+            }),
+          },
+          json: true,
+        });
+      } catch (err) {
+        expect(err.error.error)
+          .toBe('please specify a userId');
       }
     });
   });
