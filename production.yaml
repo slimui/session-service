@@ -2,10 +2,10 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   namespace: buffer
-  name: session-service-1
+  name: session-service-v1
   labels:
     app: session-service
-    version: '1'
+    version: v1
     track: stable
 spec:
   replicas: 3
@@ -17,12 +17,12 @@ spec:
     metadata:
       labels:
         app: session-service
-        version: '1'
+        version: v1
         track: stable
     spec:
       containers:
       - name: session-service
-        image: bufferapp/session-service:9aaac3f534f764dd90c57029684a27f445b79036
+        image: bufferapp/session-service:a6b540acc38892fa2b3b9f7eac450c3ca8416198
         ports:
         - containerPort: 80
         env:
@@ -30,10 +30,12 @@ spec:
           value: stable
         - name: JWT_SECRET
           value: beta-secret
+        - name: SESSION_VERSION
+          value: v1
         - name: REDIS_URI
           valueFrom:
             secretKeyRef:
-              key: redis-uri
+              key: redis-uri-prod-v1
               name: buffer-session-service-keys
         - name: BUGSNAG_KEY
           valueFrom:
@@ -60,11 +62,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: session-service-1
+  name: session-service-v1
   namespace: buffer
   labels:
     app: session-service
-    version: '1'
+    version: v1
 spec:
   ports:
     - port: 80
@@ -73,4 +75,4 @@ spec:
       name: http
   selector:
     app: session-service
-    version: '1'
+    version: v1

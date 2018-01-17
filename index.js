@@ -42,6 +42,19 @@ const jwtVerify = util.promisify(jwt.verify);
 
 module.exports.monthInSeconds = 60 * 24 * 31;
 
+module.exports.checkSessionVersion = ({
+  sessionVersion,
+}) => {
+  if (!sessionVersion) {
+    throw createError({ message: 'please specify a sessionVersion' });
+  }
+  if (sessionVersion !== process.env.SESSION_VERSION) {
+    throw createError({
+      message: `sessionVersion ${sessionVersion} does not match ${process.env.SESSION_VERSION}`,
+    });
+  }
+};
+
 const tokenizer = '_';
 
 const create = ({ session, userId }) => {
@@ -51,14 +64,30 @@ const create = ({ session, userId }) => {
   if (!userId) {
     throw createError({ message: 'please specify a userId' });
   }
-  const sessionId = `${userId}${tokenizer}${uuid()}`;
+  const sessionVersion = process.env.SESSION_VERSION;
+  const sessionId = `${sessionVersion}${tokenizer}${userId}${tokenizer}${uuid()}`;
   // create a session that expires automatically in a month
-  return redis.setex(sessionId, module.exports.monthInSeconds, JSON.stringify(session))
-    .then(() => jwtSign({ sessionId }, process.env.JWT_SECRET))
+  return redis.setex(
+    sessionId,
+    module.exports.monthInSeconds, JSON.stringify(session),
+  )
+    .then(() =>
+      jwtSign({
+        sessionId,
+        sessionVersion,
+      },
+      process.env.JWT_SECRET))
     .then(sessionToken => ({ token: sessionToken }));
 };
 
-const get = async ({ token, keys = [] }) => {
+const get = async ({
+  token,
+  sessionVersion,
+  keys = [],
+}) => {
+  module.exports.checkSessionVersion({
+    sessionVersion,
+  });
   const { sessionId } = await jwtVerify(token, process.env.JWT_SECRET);
   let rawSesion;
   if (sessionId) {
@@ -85,7 +114,14 @@ const safeRelease = async (lock) => {
   }
 };
 
-const update = async ({ token, session }) => {
+const update = async ({
+  token,
+  session,
+  sessionVersion,
+}) => {
+  module.exports.checkSessionVersion({
+    sessionVersion,
+  });
   if (!token) {
     throw createError({ message: 'please specify a token' });
   }
@@ -119,12 +155,19 @@ const update = async ({ token, session }) => {
   return 'OK';
 };
 
-const destroy = ({ token }) =>
-  jwtVerify(token, process.env.JWT_SECRET)
+const destroy = ({
+  token,
+  sessionVersion,
+}) => {
+  module.exports.checkSessionVersion({
+    sessionVersion,
+  });
+  return jwtVerify(token, process.env.JWT_SECRET)
     .then(({ sessionId }) => redis.del(sessionId))
     .then(result =>
       (result === 0 ? Promise.reject(new Error('there was an issue destroying the session')) : undefined))
     .then(() => 'OK');
+};
 
 if (process.env.NODE_ENV !== 'test') {
   app.use(logMiddleware({ name: 'SessionService' }));
